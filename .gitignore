@@ -3,5 +3,7 @@ venv/
 **__pacache__/
 db.sqlite3
 schema.yaml
+commands.txt
 .env
 .coverage
+htmlcov/
