@@ -1,6 +1,7 @@
 from rest_framework import viewsets
 from rest_framework.response import Response
 from drf_spectacular.utils import extend_schema
+from rest_framework.decorators import action
 
 from product.models import Category, Brand, Product
 from product.serializers import CategorySerializer, BrandSerializer, ProductSerializer
@@ -43,3 +44,6 @@ class ProductViewSet(viewsets.ViewSet):
     def list(self, request):
         serializer = ProductSerializer(self.queryset, many=True)
         return Response(serializer.data)
+
+    def list_product_by_category(self):
+        pass

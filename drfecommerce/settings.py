@@ -71,7 +71,7 @@ WSGI_APPLICATION = 'drfecommerce.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.mysql',
-        'NAME': 'drf_ecommerce',
+        'NAME': 'drf_ecommerce_db',
         'USER': 'root',
         'PASSWORD': os.environ.get('DATABASE_PASSWORD'),
     }
