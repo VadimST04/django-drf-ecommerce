@@ -15,18 +15,17 @@ class BrandSerializer(serializers.ModelSerializer):
         fields = '__all__'
 
 
+class ProductLineSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ProductLine
+        exclude = ['id', 'product']
+
+
 class ProductSerializer(serializers.ModelSerializer):
-    brand = BrandSerializer()
-    category = CategorySerializer()
+    brand_name = serializers.CharField(source='brand.name')
+    category_name = serializers.CharField(source='category.name')
+    product_line = ProductLineSerializer(many=True)
 
     class Meta:
         model = Product
-        fields = '__all__'
-
-
-class ProductLineSerializer(serializers.ModelSerializer):
-    product = ProductSerializer()
-
-    class Meta:
-        model = ProductLine
         fields = '__all__'
