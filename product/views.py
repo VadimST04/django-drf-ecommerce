@@ -38,12 +38,30 @@ class ProductViewSet(viewsets.ViewSet):
     A simple ViewSet for viewing brands
     """
 
-    queryset = Product.objects.all()
+    queryset = Product.objects.all().isactive()
+    lookup_field = 'slug'
+
+    def retrieve(self, request, slug=None):
+        serializer = ProductSerializer(
+            Product.objects.filter(slug=slug).select_related('category', 'brand')
+            .prefetch_related('product_line__product_image'),
+            many=True)
+        return Response(serializer.data)
 
     @extend_schema(responses=ProductSerializer)
     def list(self, request):
-        serializer = ProductSerializer(self.queryset, many=True)
+        serializer = ProductSerializer(
+            self.queryset.select_related('category', 'brand'),
+            many=True)
         return Response(serializer.data)
 
-    def list_product_by_category(self):
-        pass
+    @action(
+        methods=['GET'],
+        detail=False,
+        url_path=r'category/(?P<category>\w+)/all'
+    )
+    def list_product_by_category(self, request, category=None):
+        serializer = ProductSerializer(
+            self.queryset.filter(category__name=category).select_related('category', 'brand'),
+            many=True)
+        return Response(serializer.data)
