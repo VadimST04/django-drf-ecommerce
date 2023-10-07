@@ -58,6 +58,9 @@ class ProductLine(models.Model):
     stock_qty = models.IntegerField()
     product = models.ForeignKey(Product, on_delete=models.CASCADE, related_name='product_line')
     is_active = models.BooleanField(default=False)
+    attribute_value = models.ManyToManyField('AttributeValue', through='ProductLineAttributeValue',
+                                             related_name='product_line_attribute_value')
+    product_type = models.ForeignKey('ProductType', on_delete=models.PROTECT)
     order = OrderField(unique_for_field="product", blank=True)
 
     def clean(self):
@@ -74,10 +77,53 @@ class ProductLine(models.Model):
         return str(self.sku)
 
 
+class Attribute(models.Model):
+    objects = models.Manager()
+    name = models.CharField(max_length=100)
+    description = models.TextField(blank=True)
+
+    def __str__(self):
+        return f'{self.name}'
+
+
+class AttributeValue(models.Model):
+    objects = models.Manager()
+    attribute_value = models.CharField(max_length=100)
+    attribute = models.ForeignKey(Attribute, on_delete=models.CASCADE, related_name='attribute_value')
+
+    def __str__(self):
+        return f'{self.attribute.name}-{self.attribute_value}'
+
+
+class ProductLineAttributeValue(models.Model):
+    attribute_value = models.ForeignKey(AttributeValue, on_delete=models.CASCADE,
+                                        related_name='product_attribute_value_av')
+    product_line = models.ForeignKey(ProductLine, on_delete=models.CASCADE, related_name='product_attribute_value_pl')
+
+    class Meta:
+        unique_together = ('attribute_value', 'product_line',)
+
+    def clean(self):
+        qs = (
+            ProductLineAttributeValue.objects.filter(attribute_value=self.attribute_value).filter(
+                product_line=self.product_line).exists()
+        )
+
+        if not qs:
+            iqs = Attribute.objects.filter(attribute_value__product_line_attribute_value=self.product_line).values_list(
+                'pk', flat=True)
+            if self.attribute_value.attribute.id in list(iqs):
+                raise ValidationError('Duplicate attribute exists')
+
+    def save(self, *args, **kwargs):
+        self.full_clean()
+        return super(ProductLineAttributeValue, self).save(*args, **kwargs)
+
+
 class ProductImage(models.Model):
     objects = models.Manager()
     alternative_text = models.CharField(max_length=100)
-    url = models.ImageField(upload_to=None)
+    url = models.ImageField(upload_to=None, blank=True, null=True)
     productline = models.ForeignKey(ProductLine, on_delete=models.CASCADE, related_name='product_image')
     order = OrderField(unique_for_field='productline', blank=True)
 
@@ -93,3 +139,20 @@ class ProductImage(models.Model):
 
     def __str__(self):
         return f'{self.url}'
+
+
+class ProductType(models.Model):
+    name = models.CharField(max_length=100)
+    attribute = models.ManyToManyField(Attribute, through='ProductTypeAttribute', related_name='product_type_attribute')
+
+    def __str__(self):
+        return f'{self.name}'
+
+
+class ProductTypeAttribute(models.Model):
+    product_type = models.ForeignKey(ProductType, on_delete=models.CASCADE,
+                                     related_name='product_type_attribute_pt')
+    attribute = models.ForeignKey(Attribute, on_delete=models.CASCADE, related_name='product_type_attribute_a')
+
+    class Meta:
+        unique_together = ('product_type', 'attribute',)
