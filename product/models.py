@@ -45,6 +45,7 @@ class Product(models.Model):
     brand = models.ForeignKey(Brand, on_delete=models.CASCADE)
     category = TreeForeignKey('Category', on_delete=models.SET_NULL, null=True, blank=True)
     is_active = models.BooleanField(default=False)
+    product_type = models.ForeignKey('ProductType', on_delete=models.PROTECT)
     objects = ActiveQuerySet.as_manager()
 
     def __str__(self):
@@ -60,7 +61,6 @@ class ProductLine(models.Model):
     is_active = models.BooleanField(default=False)
     attribute_value = models.ManyToManyField('AttributeValue', through='ProductLineAttributeValue',
                                              related_name='product_line_attribute_value')
-    product_type = models.ForeignKey('ProductType', on_delete=models.PROTECT)
     order = OrderField(unique_for_field="product", blank=True)
 
     def clean(self):
